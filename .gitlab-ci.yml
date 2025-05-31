@@ -8,22 +8,21 @@ stages:
 
 build-docker:
   services:
-  - docker:dind 
+    - docker:dind 
   retry: 2 
   before_script:
-  - docker info
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-
-
+    - docker info
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   stage: pre-build
   script:
-  - docker build -t minha-imagem .
-  - docker tag minha-imagem nome_do_docker_hub/minha-imagem:latest
-  - docker push nome_do_docker_hub/minha-imagem:latest
+    - docker build -t $CI_REGISTRY_USER/ubuntu:$CI_COMMIT_SHA .
+    - docker tag $CI_REGISTRY_USER/ubuntu:$CI_COMMIT_SHA $CI_REGISTRY_USER/ubuntu:latest
+    - docker push $CI_REGISTRY_USER/ubuntu:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_USER/ubuntu:latest
 
 
 build-project:
-  image: nome_do_docker_hub/minha-imagem:latest
+  image: $CI_REGISTRY_USER/ubuntu:latest
   retry: 2 
   services:
   - docker:dind
@@ -36,7 +35,7 @@ build-project:
   - python3 plot_simples_grafico.py
 
 notificacao-sucesso:
-  image: nome_do_docker_hub/minha-imagem:latest   
+  image: $CI_REGISTRY_USER/ubuntu:latest   
   stage: notificacao
   tags:
   - docker
@@ -46,7 +45,7 @@ notificacao-sucesso:
   - sh notificacaoSucesso.sh 
 
 notificacao-falhas:
-  image: nome_do_docker_hub/minha-imagem:latest
+  image: $CI_REGISTRY_USER/ubuntu:latest
   stage: notificacao
   tags:
   - docker
@@ -54,7 +53,7 @@ notificacao-falhas:
   script:
   - python3 relogio.py
   - echo sh notificacaoFalha.sh
-  
+
 
 
 
